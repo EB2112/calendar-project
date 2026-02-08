@@ -9,6 +9,7 @@ const [event, setEvent]= useState("")
 const [eventInput, setEventInput] = useState(false)
 const [habit, setHabit]= useState("")
 const [habitInput, setHabitInput] = useState(false)
+const [habitColor, setHabitColor] = useState("")
 useEffect(()=>{
     
 
@@ -18,7 +19,7 @@ const month = date.getMonth()
 console.log(numDays)
 const newDays = Array.from({length: numDays}, (_, i) => {
     const dayDate = new Date(year, month, i + 1)
-    return <Day key={formatKey(dayDate)} date={dayDate} selectedDay={setSelectedDay}/>
+    return <Day key={formatKey(dayDate)} date={dayDate} selectedDay={setSelectedDay} events={grabEvents(dayDate)} habits={grabHabits(dayDate)}/>
 })
 
 setDays(newDays)
@@ -40,7 +41,7 @@ if(!storedEvents[key]){
 storedEvents[key].push(event)
 
 localStorage.setItem("events", JSON.stringify(storedEvents))
-
+setEvent("")
 } 
 function addHabit(date){
     if(!habitInput){
@@ -54,10 +55,10 @@ const storedHabits = JSON.parse(localStorage.getItem("habits")) || {}
 if(!storedHabits[key]){
     storedHabits[key] = []
 }
-storedHabits[key].push(habit)
-
+storedHabits[key].push({"habit": habit, "color": habitColor})
+console.log(storedHabits[key])
 localStorage.setItem("habits", JSON.stringify(storedHabits))
-
+setHabit("")
 } 
 
 function formatKey(date){
@@ -69,18 +70,18 @@ function grabEvents(day){
     const key = formatKey(day)
     const events = JSON.parse(localStorage.getItem("events")) || {}
     if(!events[key]){
-        return ["None"]
+        return null
     }
-    console.log(events[key])
+   
     return(events[key])
 }
 function grabHabits(day){
     const key = formatKey(day)
     const habits = JSON.parse(localStorage.getItem("habits")) || {}
     if(!habits[key]){
-        return ["None"]
+        return null
     }
-    console.log(habits[key])
+    
     return(habits[key])
 }
 return(
@@ -97,7 +98,7 @@ return(
             <div className="d-flex justify-content-center"><h2 >{selectedDay}</h2></div>
             <div className="border mt-5">
                 <h1>Events:</h1>
-                {selectedDay && grabEvents(selectedDay).map((event, i) => (
+                {selectedDay && grabEvents(selectedDay)?.map((event, i) => (
                     <div key={i}>
                     {event}
                     </div>
@@ -107,12 +108,25 @@ return(
             </div>
             <div className="border mt-5">
                 <h1>Habits:</h1>
-                {selectedDay && grabHabits(selectedDay).map((habit, i) => (
+                {selectedDay && grabHabits(selectedDay)?.map((habit, i) => (
                     <div key={i}>
-                    {habit}
+                    <h4><span className="dot" style={{backgroundColor: habit.color}}></span>{habit.habit}</h4>
                     </div>
                 ))}
-                {habitInput && <div><input type="text" id="habit" value={habit} onChange={e => {setHabit(e.target.value)}}/></div>}
+                {habitInput && <div>
+                    <input type="text" id="habit" value={habit} onChange={e => {setHabit(e.target.value)}}/>
+                    <label htmlFor="colorPicker">Choose color: </label>
+                    <select name="colorPicker" id="colorPicker" value={habitColor} onChange={e =>{setHabitColor(e.target.value)}}>
+                        <option value="gray" selected>Gray</option>
+                        <option value="red">Red</option>
+                        <option value="orange">Orange</option>
+                        <option value="yellow">Yellow</option>
+                        <option value="green">Green</option>
+                        <option value="blue">Blue</option>
+                        <option value="indigo">Indigo</option>
+                        <option value="violet">Violet</option>
+                    </select>
+                    </div>}
                 <button className="btn btn-primary" onClick={() => {setHabitInput(!habitInput); addHabit(selectedDay)}}>{habitInput ? "Submit" : "Add Habit"}</button>
             </div>
             <div className="footer border border-success h-100" >
