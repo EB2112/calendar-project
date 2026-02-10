@@ -51,9 +51,14 @@ function addHabit(date){
 const key = formatKey(date)
 
 const storedHabits = JSON.parse(localStorage.getItem("habits")) || {}
+const storedHabitList = JSON.parse(localStorage.getItem("habit-list")) || []
 
 if(!storedHabits[key]){
     storedHabits[key] = []
+}
+if(!storedHabitList.includes(habit)){
+    storedHabitList.push(habit.toLowerCase())
+    localStorage.setItem("habit-list", JSON.stringify(storedHabitList))
 }
 storedHabits[key].push({"habit": habit, "color": habitColor})
 console.log(storedHabits[key])
