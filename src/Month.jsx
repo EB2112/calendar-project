@@ -8,22 +8,34 @@ const [selectedDay, setSelectedDay] = useState(null)
 const [event, setEvent]= useState("")
 const [eventInput, setEventInput] = useState(false)
 const [habit, setHabit]= useState("")
+const [currentHabits, setCurrentHabits] = useState(() =>{
+    return JSON.parse(localStorage.getItem('habits') || "{}")
+    
+})
+const [currentEvents, setCurrentEvents] = useState(() =>{
+    return JSON.parse(localStorage.getItem('events') || "{}")
+    
+})
 const [habitInput, setHabitInput] = useState(false)
-const [habitColor, setHabitColor] = useState("")
+const [habitColor, setHabitColor] = useState("gray")
+
+useEffect(()=>{
+    localStorage.setItem("habits", JSON.stringify(currentHabits))
+    localStorage.setItem("events", JSON.stringify(currentEvents))
+}, [currentHabits, currentEvents])
 useEffect(()=>{
     
 
 var numDays = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 const year = date.getFullYear()
 const month = date.getMonth()
-console.log(numDays)
 const newDays = Array.from({length: numDays}, (_, i) => {
     const dayDate = new Date(year, month, i + 1)
     return <Day key={formatKey(dayDate)} date={dayDate} selectedDay={setSelectedDay} events={grabEvents(dayDate)} habits={grabHabits(dayDate)}/>
 })
 
 setDays(newDays)
-}, [date])
+}, [date, currentHabits, currentEvents])
 
 
 function addEvent(date){
@@ -32,40 +44,71 @@ function addEvent(date){
     }
 
 const key = formatKey(date)
+setCurrentEvents(prev =>{
+    const next = {...prev}
+    console.log("NEXT",next)
+    if(!next[key]){ next[key] = []}
 
-const storedEvents = JSON.parse(localStorage.getItem("events")) || {}
-
-if(!storedEvents[key]){
-    storedEvents[key] = []
-}
-storedEvents[key].push(event)
-
-localStorage.setItem("events", JSON.stringify(storedEvents))
-setEvent("")
+    next[key].push(event)
+        
+        
+    
+    return next
+})
+console.log(currentEvents)
 } 
-function addHabit(date){
+
+function addHabit(date, habit, color){
     if(!habitInput){
         return
     }
 
 const key = formatKey(date)
+setCurrentHabits(prev =>{
+    const next = {...prev}
 
-const storedHabits = JSON.parse(localStorage.getItem("habits")) || {}
-const storedHabitList = JSON.parse(localStorage.getItem("habit-list")) || []
+    if(!next[key]){ next[key] = []}
 
-if(!storedHabits[key]){
-    storedHabits[key] = []
-}
-if(!storedHabitList.includes(habit)){
-    storedHabitList.push(habit.toLowerCase())
-    localStorage.setItem("habit-list", JSON.stringify(storedHabitList))
-}
-storedHabits[key].push({"habit": habit, "color": habitColor})
-console.log(storedHabits[key])
-localStorage.setItem("habits", JSON.stringify(storedHabits))
+    next[key] = [
+        ...next[key],
+        {"habit": habit, "color": color}
+    ]
+    return next
+})
 setHabit("")
 } 
 
+function deleteHabit(date, habit){
+    const key = formatKey(date)
+    setCurrentHabits(prev => {
+       const next = {...(prev || {})}
+
+        if (!next[key]){return prev}
+
+        next[key] = next[key].filter(h => h.habit !== habit.habit)
+
+        if(next[key].length === 0) {delete next[key]}
+
+        return next
+    })
+    
+}
+function deleteEvent(date, event){
+    const key = formatKey(date)
+    console.log(event)
+    setCurrentEvents(prev => {
+       const next = {...(prev || {})}
+
+        if (!next[key]){return prev}
+
+        next[key] = next[key].filter(e => e !== event)
+
+        if(next[key].length === 0) {delete next[key]}
+
+        return next
+    })
+    
+}
 function formatKey(date){
    const formattedDate = new Date(date)
     return formattedDate.toISOString().split("T")[0]
@@ -82,12 +125,12 @@ function grabEvents(day){
 }
 function grabHabits(day){
     const key = formatKey(day)
-    const habits = JSON.parse(localStorage.getItem("habits")) || {}
-    if(!habits[key]){
+    
+    if(!currentHabits[key]){
         return null
     }
     
-    return(habits[key])
+    return(currentHabits[key])
 }
 return(
     <div>
@@ -105,7 +148,7 @@ return(
                 <h1>Events:</h1>
                 {selectedDay && grabEvents(selectedDay)?.map((event, i) => (
                     <div key={i}>
-                    {event}
+                    {event}<span><button className="btn" onClick={()=>deleteEvent(selectedDay, event)}>❌</button></span>
                     </div>
                 ))}
                 {eventInput && <div><input type="text" id="event" value={event} onChange={e => {setEvent(e.target.value)}}/></div>}
@@ -115,14 +158,15 @@ return(
                 <h1>Habits:</h1>
                 {selectedDay && grabHabits(selectedDay)?.map((habit, i) => (
                     <div key={i}>
-                    <h4><span className="dot" style={{backgroundColor: habit.color}}></span>{habit.habit}</h4>
+                    <h4><span className="dot" style={{backgroundColor: habit.color}}></span>{habit.habit}<button className="btn" onClick={()=>deleteHabit(selectedDay, habit)}>❌</button></h4>
+                    
                     </div>
                 ))}
                 {habitInput && <div>
                     <input type="text" id="habit" value={habit} onChange={e => {setHabit(e.target.value)}}/>
                     <label htmlFor="colorPicker">Choose color: </label>
                     <select name="colorPicker" id="colorPicker" value={habitColor} onChange={e =>{setHabitColor(e.target.value)}}>
-                        <option value="gray" selected>Gray</option>
+                        <option value="gray" >Gray</option>
                         <option value="red">Red</option>
                         <option value="orange">Orange</option>
                         <option value="yellow">Yellow</option>
@@ -132,7 +176,7 @@ return(
                         <option value="violet">Violet</option>
                     </select>
                     </div>}
-                <button className="btn btn-primary" onClick={() => {setHabitInput(!habitInput); addHabit(selectedDay)}}>{habitInput ? "Submit" : "Add Habit"}</button>
+                <button className="btn btn-primary" onClick={() => {setHabitInput(!habitInput); addHabit(selectedDay, habit, habitColor)}}>{habitInput ? "Submit" : "Add Habit"}</button>
             </div>
             <div className="footer border border-success h-100" >
                 <button className="btn btn-primary" onClick={() => setSelectedDay(null)}>CLOSE</button>

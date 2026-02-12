@@ -26,7 +26,7 @@ return habitList
 
 function grabHabits(){
   const habits = {}
-  const storedHabits = JSON.parse(localStorage.getItem("habits")) || {}
+  const storedHabits = JSON.parse(localStorage.getItem("habits") || "{}")
   if(storedHabits == {}){
     return
   }
