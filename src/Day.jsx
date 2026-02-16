@@ -1,7 +1,7 @@
 
 import "./Month.css"
 import "balloon-css"
-export default function Day({date, events, habits, selectedDay}){
+export default function Day({date, events, habits, selectedDay, quickAddHabit, quickAddFn}){
     
     const currDate = new Date();
     var border = ""
@@ -31,8 +31,11 @@ export default function Day({date, events, habits, selectedDay}){
         }
         return habitList
     }
+  
+  
+
     return(
-        <div className="calendar-cell" style={{aspectRatio: "1 / 1", border: border}} onClick={() => selectedDay(date.toDateString())}>
+        <div className="calendar-cell" style={{aspectRatio: "1 / 1", border: border}} onClick={() => {selectedDay(date.toDateString())}}>
         {date.getDate()}
         <div className="d-flex justify-content-end ">{habitFiller(habits).map((e) => {
             return<span className="dot" aria-label={e.habit} data-balloon-pos="up" style={{backgroundColor: e.color}}></span>
